@@ -24,3 +24,22 @@ func signUp(context *gin.Context) {
 	context.JSON(http.StatusCreated, user)
 	return
 }
+
+func login(context *gin.Context) {
+	var user models.User
+	err := context.ShouldBindJSON(&user)
+
+	if err != nil {
+		context.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	err = user.ValidateCredentials()
+	if err != nil {
+		context.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{"message": "login successful"})
+	return
+}

@@ -2,7 +2,9 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"go-events-booking-api/db"
+	"go-events-booking-api/utils"
 )
 
 type User struct {
@@ -26,7 +28,12 @@ func (u *User) Save() error {
 		}
 	}(stmt)
 
-	result, err := stmt.Exec(u.Email, u.Password)
+	hashedPassword, err := utils.HashPassword(u.Password)
+	if err != nil {
+		return err
+	}
+
+	result, err := stmt.Exec(u.Email, hashedPassword)
 
 	id, err := result.LastInsertId() // gets the last inserted id of the item
 	if err != nil {
@@ -35,4 +42,25 @@ func (u *User) Save() error {
 
 	u.ID = id
 	return err
+}
+
+func (u *User) ValidateCredentials() error {
+	database := db.GetDb()
+	sqlStmt := `SELECT password FROM users WHERE email = ?`
+
+	result := database.QueryRow(sqlStmt, u.Email)
+
+	var retrievedPassword string
+	err := result.Scan(&retrievedPassword)
+	if err != nil {
+		return errors.New("invalid credentials")
+	}
+
+	isValid := utils.CheckPasswordHash(u.Password, retrievedPassword)
+
+	if !isValid {
+		return errors.New("invalid credentials")
+	}
+
+	return nil
 }

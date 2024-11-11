@@ -3,8 +3,6 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"go-events-booking-api/models"
-	"go-events-booking-api/utils"
-	rand2 "math/rand"
 	"net/http"
 	"strconv"
 )
@@ -36,28 +34,17 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
-	token := context.Request.Header.Get("Authorization")
-
-	if token == "" {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
-		return
-	}
-
-	err := utils.VerifyToken(token)
-	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
-		return
-	}
+	userId := context.GetInt64("userId")
 
 	var event models.Event
-	err = context.ShouldBindJSON(&event)
+	err := context.ShouldBindJSON(&event)
 
 	if err != nil {
 		context.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
 		return
 	}
 
-	event.UserID = rand2.Int()
+	event.UserID = userId
 
 	err = event.Save()
 	if err != nil {

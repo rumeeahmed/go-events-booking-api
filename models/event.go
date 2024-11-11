@@ -105,6 +105,25 @@ func (e *Event) Register(userId int64) error {
 	return nil
 }
 
+func (e *Event) CancelRegistration(userId int64) error {
+	database := db.GetDb()
+	query := "DELETE registrations WHERE user_id = ?, event_id =?"
+	stmt, err := database.Prepare(query)
+
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+
+		}
+	}(stmt)
+
+	_, err = stmt.Exec(userId, e.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func GetAllEvents() ([]Event, error) {
 	database := db.GetDb()
 	sqlStmt := `SELECT * FROM events`

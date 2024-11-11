@@ -1,2 +1,2 @@
 # go-events-booking-api
-Example API in GO
+Example REST API in GO

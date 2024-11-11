@@ -86,6 +86,25 @@ func (e *Event) Delete() error {
 	return nil
 }
 
+func (e *Event) Register(userId int64) error {
+	database := db.GetDb()
+	query := "INSERT INTO registrations (user_id, event_id) VALUES (?, ?)"
+	stmt, err := database.Prepare(query)
+
+	defer func(stmt *sql.Stmt) {
+		err := stmt.Close()
+		if err != nil {
+
+		}
+	}(stmt)
+
+	_, err = stmt.Exec(userId, e.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func GetAllEvents() ([]Event, error) {
 	database := db.GetDb()
 	sqlStmt := `SELECT * FROM events`

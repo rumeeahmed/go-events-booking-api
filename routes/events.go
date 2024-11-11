@@ -57,39 +57,8 @@ func createEvent(context *gin.Context) {
 }
 
 func updateEvent(context *gin.Context) {
-	id := context.Param("id")
-	eventId, err := strconv.ParseInt(id, 10, 64)
+	userId := context.GetInt64("userId")
 
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse event id"})
-		return
-	}
-
-	_, err = models.GetEventById(eventId)
-	if err != nil {
-		context.JSON(http.StatusNotFound, gin.H{"message": "event not found"})
-		return
-	}
-
-	var updatedEvent models.Event
-	err = context.ShouldBindJSON(&updatedEvent)
-	if err != nil {
-		context.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
-		return
-	}
-
-	updatedEvent.ID = eventId
-	event, err := updatedEvent.Update()
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
-		return
-	}
-
-	context.JSON(http.StatusOK, event)
-	return
-}
-
-func deleteEvent(context *gin.Context) {
 	id := context.Param("id")
 	eventId, err := strconv.ParseInt(id, 10, 64)
 
@@ -101,6 +70,51 @@ func deleteEvent(context *gin.Context) {
 	event, err := models.GetEventById(eventId)
 	if err != nil {
 		context.JSON(http.StatusNotFound, gin.H{"message": "event not found"})
+		return
+	}
+
+	if userId != event.UserID {
+		context.JSON(http.StatusForbidden, gin.H{"message": "userId and eventId do not match"})
+		return
+	}
+
+	var updatedEvent models.Event
+	err = context.ShouldBindJSON(&updatedEvent)
+	if err != nil {
+		context.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		return
+	}
+
+	updatedEvent.ID = eventId
+	event, err = updatedEvent.Update()
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+
+	context.JSON(http.StatusOK, event)
+	return
+}
+
+func deleteEvent(context *gin.Context) {
+	userId := context.GetInt64("userId")
+
+	id := context.Param("id")
+	eventId, err := strconv.ParseInt(id, 10, 64)
+
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"message": "could not parse event id"})
+		return
+	}
+
+	event, err := models.GetEventById(eventId)
+	if err != nil {
+		context.JSON(http.StatusNotFound, gin.H{"message": "event not found"})
+		return
+	}
+
+	if userId != event.UserID {
+		context.JSON(http.StatusForbidden, gin.H{"message": "userId and eventId do not match"})
 		return
 	}
 
